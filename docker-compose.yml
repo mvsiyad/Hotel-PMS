@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:////data/pms.db
+      - JWT_SECRET=docker-pms-secret-change-in-prod
+      - PMS_ADMIN_EMAIL=admin@hotelpms.com
+      - PMS_ADMIN_PASSWORD=Admin@123!
+    volumes:
+      - pms_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/v1/dev/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5174:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - VITE_API_URL=http://backend:8001
+    restart: unless-stopped
+
+volumes:
+  pms_data:
