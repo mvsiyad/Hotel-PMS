@@ -1,6 +1,18 @@
+import { useState } from 'react'
+import {
+  X,
+  Copy,
+  Check,
+  Inbox,
+  AlertTriangle,
+  Info,
+  TrendingUp,
+  TrendingDown
+} from 'lucide-react'
+
 // Status badge component
 export function Badge({ status, label }) {
-  const text = label || status
+  const text = label || status?.replace(/_/g, ' ') || ''
   return (
     <span className={`badge badge-${status}`}>
       {text}
@@ -18,7 +30,7 @@ export function Priority({ priority }) {
 }
 
 // Loading spinner
-export function Spinner({ size = 24 }) {
+export function Spinner({ size = 20 }) {
   return (
     <div
       className="spinner"
@@ -37,10 +49,12 @@ export function LoadingOverlay() {
 }
 
 // Empty state
-export function EmptyState({ icon = '📭', title, message, action }) {
+export function EmptyState({ icon, title, message, action }) {
   return (
     <div className="empty-state">
-      <div className="empty-state-icon">{icon}</div>
+      <div className="empty-state-icon">
+        {icon || <Inbox size={38} strokeWidth={1.4} />}
+      </div>
       <h3>{title}</h3>
       {message && <p>{message}</p>}
       {action && <div style={{ marginTop: 20 }}>{action}</div>}
@@ -48,7 +62,7 @@ export function EmptyState({ icon = '📭', title, message, action }) {
   )
 }
 
-// Modal
+// Modal dialog
 export function Modal({ open, onClose, title, children, footer, wide }) {
   if (!open) return null
   return (
@@ -56,7 +70,9 @@ export function Modal({ open, onClose, title, children, footer, wide }) {
       <div className="modal" style={wide ? { maxWidth: 800 } : {}}>
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
-          <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
+          <button className="modal-close" onClick={onClose} aria-label="Close">
+            <X size={18} />
+          </button>
         </div>
         {children}
         {footer && <div className="modal-footer">{footer}</div>}
@@ -74,17 +90,24 @@ export function ConfirmModal({ open, onClose, onConfirm, title, message, danger 
       title={title}
       footer={
         <>
-          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
           <button
             className={`btn ${danger ? 'btn-danger' : 'btn-primary'}`}
-            onClick={() => { onConfirm(); onClose() }}
+            onClick={() => {
+              onConfirm()
+              onClose()
+            }}
           >
             Confirm
           </button>
         </>
       }
     >
-      <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{message}</p>
+      <p style={{ color: 'var(--text-secondary)', fontSize: 13.5, lineHeight: 1.6 }}>
+        {message}
+      </p>
     </Modal>
   )
 }
@@ -95,19 +118,33 @@ export function FormGroup({ label, children, hint }) {
     <div className="form-group">
       {label && <label>{label}</label>}
       {children}
-      {hint && <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{hint}</p>}
+      {hint && <p style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 4 }}>{hint}</p>}
     </div>
   )
 }
 
-// Copy-to-clipboard button
+// Copy-to-clipboard button with visual feedback
 export function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false)
+
   const copy = () => {
     navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1800)
   }
+
   return (
-    <button className="btn btn-ghost btn-sm" onClick={copy} title="Copy">
-      📋
+    <button
+      className="btn btn-ghost btn-sm"
+      onClick={copy}
+      title={copied ? 'Copied!' : 'Copy to clipboard'}
+      style={{ padding: '4px 8px' }}
+    >
+      {copied ? (
+        <Check size={13} style={{ color: 'var(--success)' }} />
+      ) : (
+        <Copy size={13} />
+      )}
     </button>
   )
 }
@@ -115,8 +152,8 @@ export function CopyButton({ text }) {
 // Format currency
 export function Currency({ amount, currency = 'USD' }) {
   return (
-    <span style={{ fontVariantNumeric: 'tabular-nums' }}>
-      {new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount)}
+    <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
+      {new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount || 0)}
     </span>
   )
 }
@@ -125,9 +162,11 @@ export function Currency({ amount, currency = 'USD' }) {
 export function DateDisplay({ date }) {
   if (!date) return <span style={{ color: 'var(--text-muted)' }}>—</span>
   return (
-    <span>
+    <span style={{ fontVariantNumeric: 'tabular-nums' }}>
       {new Date(date).toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: 'numeric'
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
       })}
     </span>
   )
@@ -137,15 +176,38 @@ export function DateDisplay({ date }) {
 export function DateTimeDisplay({ date }) {
   if (!date) return <span style={{ color: 'var(--text-muted)' }}>—</span>
   return (
-    <span>
+    <span style={{ fontVariantNumeric: 'tabular-nums' }}>
       {new Date(date).toLocaleString('en-US', {
-        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
       })}
     </span>
   )
 }
 
-/* ─── Sidebar Navigation Icon set ─── */
+// Modern SaaS Metric / Stat Card
+export function StatCard({ label, value, icon, color = 'primary', sublabel, change, isPositive }) {
+  return (
+    <div className="stat-card">
+      <div className="stat-card-header">
+        <span className="stat-label">{label}</span>
+        {icon && <div className={`stat-icon ${color}`}>{icon}</div>}
+      </div>
+      <div className="stat-value">{value ?? '—'}</div>
+      {(sublabel || change !== undefined) && (
+        <div className={`stat-change ${isPositive !== undefined ? (isPositive ? 'up' : 'down') : ''}`}>
+          {isPositive === true && <TrendingUp size={12} />}
+          {isPositive === false && <TrendingDown size={12} />}
+          <span>{change || sublabel}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Legacy emoji icon mapper kept for compatibility
 export const ICONS = {
   dashboard: '▦',
   frontdesk: '🛎',

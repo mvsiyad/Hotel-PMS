@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 import Sidebar from './components/Sidebar'
 
 // Pages
@@ -30,6 +31,31 @@ function ProtectedLayout({ children }) {
         {children}
       </div>
     </div>
+  )
+}
+
+function ThemedToaster() {
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+
+  return (
+    <Toaster
+      position="top-right"
+      toastOptions={{
+        duration: 3500,
+        style: {
+          background: isDark ? '#181920' : '#ffffff',
+          color: isDark ? '#f8fafc' : '#0f172a',
+          border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0'}`,
+          borderRadius: 10,
+          fontSize: 13,
+          fontWeight: 500,
+          boxShadow: isDark
+            ? '0 10px 30px rgba(0, 0, 0, 0.5)'
+            : '0 10px 25px rgba(0, 0, 0, 0.08)',
+        },
+      }}
+    />
   )
 }
 
@@ -66,22 +92,13 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: '#161D2C',
-              color: '#E8EDF5',
-              border: '1px solid #1E2A38',
-              borderRadius: 10,
-              fontSize: 13,
-            },
-          }}
-        />
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+          <ThemedToaster />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

@@ -1,11 +1,36 @@
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
+import {
+  Plus,
+  DoorOpen,
+  CheckCircle2,
+  XCircle,
+  Calendar,
+  AlertCircle,
+  Clock
+} from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import {
-  getReservations, createReservation, checkIn, checkOut,
-  cancelReservation, noShow, getGuests, getRoomTypes, getRooms
+  getReservations,
+  createReservation,
+  checkIn,
+  checkOut,
+  cancelReservation,
+  noShow,
+  getGuests,
+  getRoomTypes,
+  getRooms,
 } from '../services/api'
-import { Badge, Modal, FormGroup, Currency, DateDisplay, EmptyState, LoadingOverlay } from '../components/UI'
+import {
+  Badge,
+  Modal,
+  FormGroup,
+  Currency,
+  DateDisplay,
+  EmptyState,
+  LoadingOverlay,
+} from '../components/UI'
+import Topbar from '../components/Topbar'
 
 const STATUS_FILTERS = ['', 'PENDING', 'CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT', 'CANCELLED', 'NO_SHOW']
 
@@ -21,7 +46,12 @@ export default function Reservations() {
   const [showCheckin, setShowCheckin] = useState(null)
   const [selectedRoom, setSelectedRoom] = useState('')
   const [form, setForm] = useState({
-    guest_id: '', room_type_id: '', check_in_date: '', check_out_date: '', adults: 1, children: 0
+    guest_id: '',
+    room_type_id: '',
+    check_in_date: '',
+    check_out_date: '',
+    adults: 1,
+    children: 0,
   })
 
   const load = async () => {
@@ -38,13 +68,21 @@ export default function Reservations() {
     setLoading(false)
   }
 
-  useEffect(() => { if (hotelId) load() }, [hotelId, statusFilter])
+  useEffect(() => {
+    if (hotelId) load()
+  }, [hotelId, statusFilter])
 
   const handleCreate = async (e) => {
     e.preventDefault()
     try {
-      await createReservation(hotelId, { ...form, guest_id: parseInt(form.guest_id), room_type_id: parseInt(form.room_type_id), adults: parseInt(form.adults), children: parseInt(form.children) })
-      toast.success('Reservation created')
+      await createReservation(hotelId, {
+        ...form,
+        guest_id: parseInt(form.guest_id),
+        room_type_id: parseInt(form.room_type_id),
+        adults: parseInt(form.adults),
+        children: parseInt(form.children),
+      })
+      toast.success('Reservation successfully booked')
       setShowCreate(false)
       load()
     } catch (err) {
@@ -66,7 +104,7 @@ export default function Reservations() {
   const handleCheckOut = async (res) => {
     try {
       await checkOut(hotelId, res.id, {})
-      toast.success('Guest checked out. Room is now DIRTY.')
+      toast.success('Guest checked out. Unit scheduled for housekeeping.')
       load()
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Check-out failed')
@@ -74,19 +112,19 @@ export default function Reservations() {
   }
 
   const handleCancel = async (res) => {
-    if (!confirm(`Cancel reservation ${res.confirmation_number}?`)) return
+    if (!confirm(`Are you sure you want to cancel reservation ${res.confirmation_number}?`)) return
     try {
       await cancelReservation(hotelId, res.id)
       toast.success('Reservation cancelled')
       load()
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Cannot cancel')
+      toast.error(err.response?.data?.detail || 'Cannot cancel reservation')
     }
   }
 
   const getGuestName = (id) => {
     const g = guests.find((g) => g.id === id)
-    return g ? `${g.first_name} ${g.last_name}` : `#${id}`
+    return g ? `${g.first_name} ${g.last_name}` : `Guest #${id}`
   }
 
   const getRTName = (id) => roomTypes.find((rt) => rt.id === id)?.name || '—'
@@ -95,18 +133,19 @@ export default function Reservations() {
 
   return (
     <div>
-      <div className="topbar">
-        <div className="topbar-left">
-          <div className="topbar-title">Reservations</div>
-          <div className="topbar-subtitle">{reservations.length} records</div>
-        </div>
-        <div className="topbar-actions">
-          <button className="btn btn-primary btn-sm" onClick={() => setShowCreate(true)}>+ New Reservation</button>
-        </div>
-      </div>
+      <Topbar
+        title="Reservations"
+        subtitle={`${reservations.length} records matching current view`}
+        actions={
+          <button className="btn btn-primary btn-sm" onClick={() => setShowCreate(true)}>
+            <Plus size={14} />
+            <span>New Reservation</span>
+          </button>
+        }
+      />
 
       <div className="page-container">
-        {/* Status filter tabs */}
+        {/* Status Filter Tabs */}
         <div className="tabs">
           {STATUS_FILTERS.map((s) => (
             <button
@@ -114,11 +153,12 @@ export default function Reservations() {
               className={`tab ${statusFilter === s ? 'active' : ''}`}
               onClick={() => setStatusFilter(s)}
             >
-              {s || 'All'}
+              {s ? s.replace(/_/g, ' ') : 'All Statuses'}
             </button>
           ))}
         </div>
 
+        {/* Reservations Table */}
         <div className="table-container">
           <table>
             <thead>
@@ -128,93 +168,194 @@ export default function Reservations() {
                 <th>Room Type</th>
                 <th>Check-In</th>
                 <th>Check-Out</th>
-                <th>Nights</th>
+                <th>Stay</th>
                 <th>Amount</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {reservations.length === 0 && (
-                <tr><td colSpan={9} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>No reservations found</td></tr>
+              {reservations.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={9}
+                    style={{
+                      padding: 48,
+                      textAlign: 'center',
+                      color: 'var(--text-muted)',
+                      fontSize: 13.5,
+                    }}
+                  >
+                    No reservations found matching "{statusFilter || 'All'}"
+                  </td>
+                </tr>
+              ) : (
+                reservations.map((r) => {
+                  const nights = Math.max(
+                    1,
+                    Math.round(
+                      (new Date(r.check_out_date) - new Date(r.check_in_date)) / 86400000
+                    )
+                  )
+                  return (
+                    <tr key={r.id}>
+                      <td>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: 12,
+                            color: 'var(--primary)',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {r.confirmation_number}
+                        </span>
+                      </td>
+                      <td>
+                        <strong style={{ color: 'var(--text-primary)' }}>
+                          {getGuestName(r.guest_id)}
+                        </strong>
+                      </td>
+                      <td style={{ color: 'var(--text-secondary)' }}>{getRTName(r.room_type_id)}</td>
+                      <td>
+                        <DateDisplay date={r.check_in_date} />
+                      </td>
+                      <td>
+                        <DateDisplay date={r.check_out_date} />
+                      </td>
+                      <td style={{ color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
+                        {nights} {nights === 1 ? 'night' : 'nights'}
+                      </td>
+                      <td>
+                        <Currency amount={r.total_amount} />
+                      </td>
+                      <td>
+                        <Badge status={r.status} />
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', gap: 6, justifyContent: 'flex-end' }}>
+                          {r.status === 'CONFIRMED' && (
+                            <button
+                              className="btn btn-success btn-sm"
+                              onClick={() => {
+                                setShowCheckin(r)
+                                setSelectedRoom('')
+                              }}
+                            >
+                              <DoorOpen size={13} />
+                              <span>Check In</span>
+                            </button>
+                          )}
+                          {r.status === 'CHECKED_IN' && (
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() => handleCheckOut(r)}
+                            >
+                              <CheckCircle2 size={13} />
+                              <span>Check Out</span>
+                            </button>
+                          )}
+                          {['CONFIRMED', 'PENDING'].includes(r.status) && (
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              style={{ color: 'var(--danger)' }}
+                              onClick={() => handleCancel(r)}
+                              title="Cancel reservation"
+                            >
+                              <XCircle size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
               )}
-              {reservations.map((r) => {
-                const nights = Math.round((new Date(r.check_out_date) - new Date(r.check_in_date)) / 86400000)
-                return (
-                  <tr key={r.id}>
-                    <td>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--primary)' }}>
-                        {r.confirmation_number}
-                      </span>
-                    </td>
-                    <td>{getGuestName(r.guest_id)}</td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{getRTName(r.room_type_id)}</td>
-                    <td><DateDisplay date={r.check_in_date} /></td>
-                    <td><DateDisplay date={r.check_out_date} /></td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{nights}n</td>
-                    <td><Currency amount={r.total_amount} /></td>
-                    <td><Badge status={r.status} /></td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        {r.status === 'CONFIRMED' && (
-                          <button className="btn btn-success btn-sm" onClick={() => { setShowCheckin(r); setSelectedRoom('') }}>
-                            Check In
-                          </button>
-                        )}
-                        {r.status === 'CHECKED_IN' && (
-                          <button className="btn btn-primary btn-sm" onClick={() => handleCheckOut(r)}>
-                            Check Out
-                          </button>
-                        )}
-                        {['CONFIRMED', 'PENDING'].includes(r.status) && (
-                          <button className="btn btn-danger btn-sm" onClick={() => handleCancel(r)}>
-                            Cancel
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
             </tbody>
           </table>
         </div>
       </div>
 
       {/* Create Reservation Modal */}
-      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="New Reservation"
+      <Modal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        title="Book New Reservation"
         footer={
           <>
-            <button className="btn btn-secondary" onClick={() => setShowCreate(false)}>Cancel</button>
-            <button className="btn btn-primary" form="create-res-form" type="submit">Create Reservation</button>
+            <button className="btn btn-secondary" onClick={() => setShowCreate(false)}>
+              Cancel
+            </button>
+            <button className="btn btn-primary" form="create-res-form" type="submit">
+              Confirm Booking
+            </button>
           </>
         }
       >
         <form id="create-res-form" onSubmit={handleCreate}>
-          <FormGroup label="Guest">
-            <select value={form.guest_id} onChange={(e) => setForm({ ...form, guest_id: e.target.value })} required>
+          <FormGroup label="Primary Guest">
+            <select
+              value={form.guest_id}
+              onChange={(e) => setForm({ ...form, guest_id: e.target.value })}
+              required
+            >
               <option value="">Select guest...</option>
-              {guests.map((g) => <option key={g.id} value={g.id}>{g.first_name} {g.last_name} – {g.email || 'No email'}</option>)}
+              {guests.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.first_name} {g.last_name} — {g.email || 'No email registered'}
+                </option>
+              ))}
             </select>
           </FormGroup>
-          <FormGroup label="Room Type">
-            <select value={form.room_type_id} onChange={(e) => setForm({ ...form, room_type_id: e.target.value })} required>
+
+          <FormGroup label="Room Type Category">
+            <select
+              value={form.room_type_id}
+              onChange={(e) => setForm({ ...form, room_type_id: e.target.value })}
+              required
+            >
               <option value="">Select room type...</option>
-              {roomTypes.map((rt) => <option key={rt.id} value={rt.id}>{rt.name} (${rt.base_rate}/night)</option>)}
+              {roomTypes.map((rt) => (
+                <option key={rt.id} value={rt.id}>
+                  {rt.name} (${rt.base_rate} / night)
+                </option>
+              ))}
             </select>
           </FormGroup>
+
           <div className="grid-2">
             <FormGroup label="Check-In Date">
-              <input type="date" value={form.check_in_date} onChange={(e) => setForm({ ...form, check_in_date: e.target.value })} required />
+              <input
+                type="date"
+                value={form.check_in_date}
+                onChange={(e) => setForm({ ...form, check_in_date: e.target.value })}
+                required
+              />
             </FormGroup>
             <FormGroup label="Check-Out Date">
-              <input type="date" value={form.check_out_date} onChange={(e) => setForm({ ...form, check_out_date: e.target.value })} required />
+              <input
+                type="date"
+                value={form.check_out_date}
+                onChange={(e) => setForm({ ...form, check_out_date: e.target.value })}
+                required
+              />
             </FormGroup>
-            <FormGroup label="Adults">
-              <input type="number" value={form.adults} onChange={(e) => setForm({ ...form, adults: e.target.value })} min={1} required />
+            <FormGroup label="Adult Occupants">
+              <input
+                type="number"
+                value={form.adults}
+                onChange={(e) => setForm({ ...form, adults: e.target.value })}
+                min={1}
+                required
+              />
             </FormGroup>
-            <FormGroup label="Children">
-              <input type="number" value={form.children} onChange={(e) => setForm({ ...form, children: e.target.value })} min={0} />
+            <FormGroup label="Children Occupants">
+              <input
+                type="number"
+                value={form.children}
+                onChange={(e) => setForm({ ...form, children: e.target.value })}
+                min={0}
+              />
             </FormGroup>
           </div>
         </form>
@@ -224,12 +365,18 @@ export default function Reservations() {
       <Modal
         open={!!showCheckin}
         onClose={() => setShowCheckin(null)}
-        title={`Check In — ${showCheckin?.confirmation_number}`}
+        title={`Check In — Booking ${showCheckin?.confirmation_number}`}
         footer={
           <>
-            <button className="btn btn-secondary" onClick={() => setShowCheckin(null)}>Cancel</button>
-            <button className="btn btn-success" disabled={!selectedRoom} onClick={handleCheckIn}>
-              ✓ Complete Check-In
+            <button className="btn btn-secondary" onClick={() => setShowCheckin(null)}>
+              Cancel
+            </button>
+            <button
+              className="btn btn-success"
+              disabled={!selectedRoom}
+              onClick={handleCheckIn}
+            >
+              Complete Check-In
             </button>
           </>
         }
@@ -237,18 +384,42 @@ export default function Reservations() {
         {showCheckin && (
           <>
             <div style={{ marginBottom: 16 }}>
-              <Badge status="CONFIRMED" /> Reservation confirmed
+              <Badge status="CONFIRMED" />
+              <span style={{ fontSize: 13, color: 'var(--text-secondary)', marginLeft: 8 }}>
+                Confirmed reservation for {getGuestName(showCheckin.guest_id)}
+              </span>
             </div>
-            <FormGroup label="Assign Room (READY rooms only)">
-              <select value={selectedRoom} onChange={(e) => setSelectedRoom(e.target.value)} required>
+            <FormGroup label="Designate Room (Ready units only)">
+              <select
+                value={selectedRoom}
+                onChange={(e) => setSelectedRoom(e.target.value)}
+                required
+              >
                 <option value="">Select a ready room...</option>
-                {rooms.filter((r) => r.room_type_id === showCheckin.room_type_id || true).map((r) => (
-                  <option key={r.id} value={r.id}>Room {r.room_number} — {r.status}</option>
-                ))}
+                {rooms
+                  .filter((r) => r.room_type_id === showCheckin.room_type_id || true)
+                  .map((r) => (
+                    <option key={r.id} value={r.id}>
+                      Room {r.room_number} — ({r.status})
+                    </option>
+                  ))}
               </select>
             </FormGroup>
-            <div className="alert alert-info">
-              ℹ️ Only READY, CLEAN, or AVAILABLE rooms can be used for check-in.
+            <div
+              style={{
+                fontSize: 12,
+                color: 'var(--text-muted)',
+                background: 'var(--bg-tertiary)',
+                padding: '10px 14px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <AlertCircle size={14} style={{ color: 'var(--info)' }} />
+              <span>Only inspected and cleaned units are eligible for assignment.</span>
             </div>
           </>
         )}
