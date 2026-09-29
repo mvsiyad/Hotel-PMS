@@ -1,12 +1,37 @@
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
+import {
+  Plus,
+  LayoutGrid,
+  Table as TableIcon,
+  Filter,
+  AlertTriangle,
+  BedDouble,
+  CheckCircle2,
+  X
+} from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import {
-  getRooms, getRoomTypes, createRoom, updateRoomStatus
+  getRooms,
+  getRoomTypes,
+  createRoom,
+  updateRoomStatus,
 } from '../services/api'
 import { Badge, Modal, FormGroup, EmptyState, LoadingOverlay } from '../components/UI'
+import Topbar from '../components/Topbar'
 
-const STATUSES = ['AVAILABLE', 'RESERVED', 'OCCUPIED', 'DIRTY', 'CLEANING', 'CLEAN', 'INSPECTED', 'READY', 'OUT_OF_ORDER', 'MAINTENANCE']
+const STATUSES = [
+  'AVAILABLE',
+  'RESERVED',
+  'OCCUPIED',
+  'DIRTY',
+  'CLEANING',
+  'CLEAN',
+  'INSPECTED',
+  'READY',
+  'OUT_OF_ORDER',
+  'MAINTENANCE',
+]
 
 export default function Rooms() {
   const { hotelId } = useAuth()
@@ -17,7 +42,7 @@ export default function Rooms() {
   const [floorFilter, setFloorFilter] = useState('')
   const [view, setView] = useState('board') // board | table
   const [showCreate, setShowCreate] = useState(false)
-  const [showStatus, setShowStatus] = useState(null) // room
+  const [showStatus, setShowStatus] = useState(null)
   const [newRoom, setNewRoom] = useState({ room_number: '', room_type_id: '', floor: 1 })
   const [newStatus, setNewStatus] = useState('')
 
@@ -31,7 +56,9 @@ export default function Rooms() {
     setLoading(false)
   }
 
-  useEffect(() => { if (hotelId) load() }, [hotelId])
+  useEffect(() => {
+    if (hotelId) load()
+  }, [hotelId])
 
   const filtered = rooms.filter((r) => {
     if (statusFilter && r.status !== statusFilter) return false
@@ -44,8 +71,12 @@ export default function Rooms() {
   const handleCreate = async (e) => {
     e.preventDefault()
     try {
-      await createRoom(hotelId, { ...newRoom, room_type_id: parseInt(newRoom.room_type_id), floor: parseInt(newRoom.floor) })
-      toast.success('Room created')
+      await createRoom(hotelId, {
+        ...newRoom,
+        room_type_id: parseInt(newRoom.room_type_id),
+        floor: parseInt(newRoom.floor),
+      })
+      toast.success('Room unit added to inventory')
       setShowCreate(false)
       setNewRoom({ room_number: '', room_type_id: '', floor: 1 })
       load()
@@ -57,50 +88,101 @@ export default function Rooms() {
   const handleStatusUpdate = async () => {
     try {
       await updateRoomStatus(hotelId, showStatus.id, { status: newStatus })
-      toast.success(`Room ${showStatus.room_number} → ${newStatus}`)
+      toast.success(`Room ${showStatus.room_number} transitioned to ${newStatus}`)
       setShowStatus(null)
       load()
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Invalid transition')
+      toast.error(err.response?.data?.detail || 'Invalid status transition')
     }
   }
 
-  const getRoomTypeName = (id) => roomTypes.find((rt) => rt.id === id)?.name || 'Unknown'
+  const getRoomTypeName = (id) => roomTypes.find((rt) => rt.id === id)?.name || 'Standard'
 
   if (loading) return <LoadingOverlay />
 
   return (
     <div>
-      <div className="topbar">
-        <div className="topbar-left">
-          <div className="topbar-title">Rooms</div>
-          <div className="topbar-subtitle">{rooms.length} rooms total</div>
-        </div>
-        <div className="topbar-actions">
-          <div className="tabs" style={{ marginBottom: 0 }}>
-            <button className={`tab ${view === 'board' ? 'active' : ''}`} onClick={() => setView('board')}>🟦 Board</button>
-            <button className={`tab ${view === 'table' ? 'active' : ''}`} onClick={() => setView('table')}>≡ Table</button>
+      <Topbar
+        title="Room Inventory"
+        subtitle={`${rooms.length} registered room units across ${floors.length} floors`}
+        actions={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="tabs" style={{ marginBottom: 0 }}>
+              <button
+                className={`tab ${view === 'board' ? 'active' : ''}`}
+                onClick={() => setView('board')}
+              >
+                <LayoutGrid size={13} />
+                <span>Grid</span>
+              </button>
+              <button
+                className={`tab ${view === 'table' ? 'active' : ''}`}
+                onClick={() => setView('table')}
+              >
+                <TableIcon size={13} />
+                <span>Table</span>
+              </button>
+            </div>
+            <button className="btn btn-primary btn-sm" onClick={() => setShowCreate(true)}>
+              <Plus size={14} />
+              <span>Add Room</span>
+            </button>
           </div>
-          <button className="btn btn-primary btn-sm" onClick={() => setShowCreate(true)}>+ Add Room</button>
-        </div>
-      </div>
+        }
+      />
 
       <div className="page-container">
         {/* Filters */}
         <div className="filter-bar">
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: 180 }}>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{ width: 180 }}
+          >
             <option value="">All Statuses</option>
-            {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            {STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s.replace(/_/g, ' ')}
+              </option>
+            ))}
           </select>
-          <select value={floorFilter} onChange={(e) => setFloorFilter(e.target.value)} style={{ width: 140 }}>
+
+          <select
+            value={floorFilter}
+            onChange={(e) => setFloorFilter(e.target.value)}
+            style={{ width: 140 }}
+          >
             <option value="">All Floors</option>
-            {floors.map((f) => <option key={f} value={f}>Floor {f}</option>)}
+            {floors.map((f) => (
+              <option key={f} value={f}>
+                Floor {f}
+              </option>
+            ))}
           </select>
+
           {(statusFilter || floorFilter) && (
-            <button className="btn btn-ghost btn-sm" onClick={() => { setStatusFilter(''); setFloorFilter('') }}>Clear</button>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => {
+                setStatusFilter('')
+                setFloorFilter('')
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: 5 }}
+            >
+              <X size={12} />
+              <span>Clear</span>
+            </button>
           )}
-          <span style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: 12 }}>
-            {filtered.length} rooms
+
+          <span
+            style={{
+              marginLeft: 'auto',
+              color: 'var(--text-muted)',
+              fontSize: 12,
+              fontWeight: 500,
+            }}
+          >
+            Showing {filtered.length} of {rooms.length} units
           </span>
         </div>
 
@@ -112,15 +194,27 @@ export default function Rooms() {
               if (floorRooms.length === 0) return null
               return (
                 <div key={floor} style={{ marginBottom: 28 }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-muted)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>
-                    Floor {floor}
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 12,
+                      color: 'var(--text-muted)',
+                      marginBottom: 12,
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.8,
+                    }}
+                  >
+                    Floor {floor} · {floorRooms.length} Units
                   </div>
                   <div className="room-board">
                     {floorRooms.map((room) => (
                       <div
                         key={room.id}
                         className={`room-card status-${room.status}`}
-                        onClick={() => { setShowStatus(room); setNewStatus(room.status) }}
+                        onClick={() => {
+                          setShowStatus(room)
+                          setNewStatus(room.status)
+                        }}
                       >
                         <div className="room-number">{room.room_number}</div>
                         <div className="room-type">{getRoomTypeName(room.room_type_id)}</div>
@@ -138,32 +232,58 @@ export default function Rooms() {
             <table>
               <thead>
                 <tr>
-                  <th>Room</th>
+                  <th>Room Unit</th>
                   <th>Floor</th>
-                  <th>Type</th>
-                  <th>Occupancy</th>
+                  <th>Room Type</th>
+                  <th>Occupancy Limit</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 && (
-                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No rooms found</td></tr>
-                )}
-                {filtered.map((room) => (
-                  <tr key={room.id}>
-                    <td><strong>{room.room_number}</strong></td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{room.floor}</td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{getRoomTypeName(room.room_type_id)}</td>
-                    <td style={{ color: 'var(--text-secondary)' }}>Max {room.occupancy_limit}</td>
-                    <td><Badge status={room.status} /></td>
-                    <td>
-                      <button className="btn btn-ghost btn-sm" onClick={() => { setShowStatus(room); setNewStatus(room.status) }}>
-                        Change Status
-                      </button>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      style={{
+                        textAlign: 'center',
+                        padding: 40,
+                        color: 'var(--text-muted)',
+                      }}
+                    >
+                      No room units match the selected filters
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filtered.map((room) => (
+                    <tr key={room.id}>
+                      <td>
+                        <strong>Room {room.room_number}</strong>
+                      </td>
+                      <td style={{ color: 'var(--text-secondary)' }}>Floor {room.floor}</td>
+                      <td style={{ color: 'var(--text-secondary)' }}>
+                        {getRoomTypeName(room.room_type_id)}
+                      </td>
+                      <td style={{ color: 'var(--text-secondary)' }}>
+                        Max {room.occupancy_limit} guests
+                      </td>
+                      <td>
+                        <Badge status={room.status} />
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => {
+                            setShowStatus(room)
+                            setNewStatus(room.status)
+                          }}
+                        >
+                          Change Status
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -171,27 +291,53 @@ export default function Rooms() {
       </div>
 
       {/* Create Room Modal */}
-      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Add New Room"
+      <Modal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        title="Add Room Unit"
         footer={
           <>
-            <button className="btn btn-secondary" onClick={() => setShowCreate(false)}>Cancel</button>
-            <button className="btn btn-primary" form="create-room-form" type="submit">Create Room</button>
+            <button className="btn btn-secondary" onClick={() => setShowCreate(false)}>
+              Cancel
+            </button>
+            <button className="btn btn-primary" form="create-room-form" type="submit">
+              Save Unit
+            </button>
           </>
         }
       >
         <form id="create-room-form" onSubmit={handleCreate}>
           <div className="grid-2">
             <FormGroup label="Room Number">
-              <input value={newRoom.room_number} onChange={(e) => setNewRoom({ ...newRoom, room_number: e.target.value })} placeholder="101" required />
+              <input
+                value={newRoom.room_number}
+                onChange={(e) => setNewRoom({ ...newRoom, room_number: e.target.value })}
+                placeholder="e.g. 301"
+                required
+              />
             </FormGroup>
-            <FormGroup label="Floor">
-              <input type="number" value={newRoom.floor} onChange={(e) => setNewRoom({ ...newRoom, floor: e.target.value })} min={1} required />
+            <FormGroup label="Floor Number">
+              <input
+                type="number"
+                value={newRoom.floor}
+                onChange={(e) => setNewRoom({ ...newRoom, floor: e.target.value })}
+                min={1}
+                required
+              />
             </FormGroup>
           </div>
-          <FormGroup label="Room Type">
-            <select value={newRoom.room_type_id} onChange={(e) => setNewRoom({ ...newRoom, room_type_id: e.target.value })} required>
-              <option value="">Select room type...</option>
-              {roomTypes.map((rt) => <option key={rt.id} value={rt.id}>{rt.name} (${rt.base_rate}/night)</option>)}
+          <FormGroup label="Room Type Category">
+            <select
+              value={newRoom.room_type_id}
+              onChange={(e) => setNewRoom({ ...newRoom, room_type_id: e.target.value })}
+              required
+            >
+              <option value="">Select category...</option>
+              {roomTypes.map((rt) => (
+                <option key={rt.id} value={rt.id}>
+                  {rt.name} (${rt.base_rate} / night)
+                </option>
+              ))}
             </select>
           </FormGroup>
         </form>
@@ -201,12 +347,18 @@ export default function Rooms() {
       <Modal
         open={!!showStatus}
         onClose={() => setShowStatus(null)}
-        title={`Room ${showStatus?.room_number} — Update Status`}
+        title={`Room ${showStatus?.room_number} — Transition State`}
         footer={
           <>
-            <button className="btn btn-secondary" onClick={() => setShowStatus(null)}>Cancel</button>
-            <button className="btn btn-primary" disabled={newStatus === showStatus?.status} onClick={handleStatusUpdate}>
-              Update Status
+            <button className="btn btn-secondary" onClick={() => setShowStatus(null)}>
+              Cancel
+            </button>
+            <button
+              className="btn btn-primary"
+              disabled={newStatus === showStatus?.status}
+              onClick={handleStatusUpdate}
+            >
+              Update State
             </button>
           </>
         }
@@ -214,16 +366,33 @@ export default function Rooms() {
         {showStatus && (
           <>
             <div style={{ marginBottom: 16 }}>
-              <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Current: </span>
+              <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Current State: </span>
               <Badge status={showStatus.status} />
             </div>
-            <FormGroup label="New Status">
+            <FormGroup label="Target Status">
               <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)}>
-                {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s.replace(/_/g, ' ')}
+                  </option>
+                ))}
               </select>
             </FormGroup>
-            <div className="alert alert-warning">
-              ⚠️ Only valid FSM transitions are permitted. Invalid transitions will be rejected.
+            <div
+              style={{
+                fontSize: 12,
+                color: 'var(--text-muted)',
+                background: 'var(--bg-tertiary)',
+                padding: '10px 14px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <AlertTriangle size={14} style={{ color: 'var(--warning)' }} />
+              <span>Only state transitions verified by the PMS state machine are permitted.</span>
             </div>
           </>
         )}

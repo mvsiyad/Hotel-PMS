@@ -1,14 +1,29 @@
 import { useState, useEffect } from 'react'
+import {
+  BarChart3,
+  PlaneLanding,
+  PlaneTakeoff,
+  CheckCircle2,
+  Sparkles,
+  AlertOctagon,
+  Brush,
+  Wrench,
+  BedDouble,
+  ArrowUpRight
+} from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { getRooms, getReservations, getHousekeeping, getMaintenance } from '../services/api'
 import { Badge, Currency, DateDisplay, LoadingOverlay } from '../components/UI'
+import Topbar from '../components/Topbar'
 
 function StatCard({ label, value, icon, color = 'primary', sublabel }) {
   return (
-    <div className={`stat-card ${color}`}>
-      <div className={`stat-icon ${color}`}>{icon}</div>
+    <div className="stat-card">
+      <div className="stat-card-header">
+        <span className="stat-label">{label}</span>
+        <div className={`stat-icon ${color}`}>{icon}</div>
+      </div>
       <div className="stat-value">{value ?? '—'}</div>
-      <div className="stat-label">{label}</div>
       {sublabel && <div className="stat-change">{sublabel}</div>}
     </div>
   )
@@ -64,58 +79,132 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="topbar">
-        <div className="topbar-left">
-          <div className="topbar-title">Dashboard</div>
-          <div className="topbar-subtitle">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </div>
-        </div>
-        <div className="topbar-actions">
-          <span className="badge badge-ACTIVE" style={{ fontSize: 12 }}>🟢 System Online</span>
-        </div>
-      </div>
+      <Topbar
+        title="Operations Dashboard"
+        subtitle={new Date().toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })}
+      />
 
       <div className="page-container">
-        {/* Occupancy Overview */}
+        {/* KPI Metrics Grid */}
         <div className="stat-grid">
-          <StatCard label="Occupancy Rate" value={`${occupancyPct}%`} icon="📊" color="primary"
-            sublabel={`${occupied} / ${rooms.length} rooms`} />
-          <StatCard label="Today's Arrivals" value={todayArrivals.length} icon="🛬" color="success" />
-          <StatCard label="Today's Departures" value={todayDepartures.length} icon="🛫" color="warning" />
-          <StatCard label="Available Rooms" value={available} icon="✅" color="success" />
-          <StatCard label="Dirty Rooms" value={dirty} icon="🧹" color="warning" />
-          <StatCard label="Out of Order" value={outOfOrder} icon="⛔" color="danger" />
-          <StatCard label="Pending Housekeeping" value={pendingHk} icon="🫧" color="purple" />
-          <StatCard label="Open Maintenance" value={openMaint} icon="🔧" color="gold" />
+          <StatCard
+            label="Occupancy Rate"
+            value={`${occupancyPct}%`}
+            icon={<BarChart3 size={16} />}
+            color="primary"
+            sublabel={`${occupied} of ${rooms.length} rooms occupied`}
+          />
+          <StatCard
+            label="Today's Arrivals"
+            value={todayArrivals.length}
+            icon={<PlaneLanding size={16} />}
+            color="success"
+            sublabel="Scheduled check-ins"
+          />
+          <StatCard
+            label="Today's Departures"
+            value={todayDepartures.length}
+            icon={<PlaneTakeoff size={16} />}
+            color="warning"
+            sublabel="Pending check-outs"
+          />
+          <StatCard
+            label="Available Rooms"
+            value={available}
+            icon={<CheckCircle2 size={16} />}
+            color="success"
+            sublabel="Ready for guest check-in"
+          />
+          <StatCard
+            label="Dirty Rooms"
+            value={dirty}
+            icon={<Sparkles size={16} />}
+            color="warning"
+            sublabel="Turnaround needed"
+          />
+          <StatCard
+            label="Out of Order"
+            value={outOfOrder}
+            icon={<AlertOctagon size={16} />}
+            color="danger"
+            sublabel="Offline inventory"
+          />
+          <StatCard
+            label="Pending Housekeeping"
+            value={pendingHk}
+            icon={<Brush size={16} />}
+            color="purple"
+            sublabel="Active cleaning tasks"
+          />
+          <StatCard
+            label="Open Maintenance"
+            value={openMaint}
+            icon={<Wrench size={16} />}
+            color="gold"
+            sublabel="Work orders awaiting resolution"
+          />
         </div>
 
         {/* Room Status Quick View */}
         <div className="card" style={{ marginBottom: 24 }}>
           <div className="card-header">
             <div>
-              <div className="card-title">Room Status Overview</div>
-              <div className="card-subtitle">All {rooms.length} rooms</div>
+              <div className="card-title">Room Inventory Status</div>
+              <div className="card-subtitle">Real-time status breakdown across {rooms.length} total units</div>
             </div>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {['READY', 'AVAILABLE', 'OCCUPIED', 'RESERVED', 'DIRTY', 'CLEANING', 'CLEAN', 'INSPECTED', 'MAINTENANCE', 'OUT_OF_ORDER'].map((status) => {
+            {[
+              'READY',
+              'AVAILABLE',
+              'OCCUPIED',
+              'RESERVED',
+              'DIRTY',
+              'CLEANING',
+              'CLEAN',
+              'INSPECTED',
+              'MAINTENANCE',
+              'OUT_OF_ORDER',
+            ].map((status) => {
               const count = rooms.filter((r) => r.status === status).length
               if (count === 0) return null
               return (
-                <div key={status} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-tertiary)', padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border)' }}>
+                <div
+                  key={status}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    background: 'var(--bg-tertiary)',
+                    padding: '7px 12px',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border)',
+                  }}
+                >
                   <Badge status={status} />
-                  <span style={{ fontWeight: 700, fontSize: 15 }}>{count}</span>
+                  <span style={{ fontWeight: 700, fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>
+                    {count}
+                  </span>
                 </div>
               )
             })}
           </div>
         </div>
 
-        {/* Recent Reservations */}
+        {/* Recent Reservations Table */}
         <div className="table-container">
           <div className="table-header">
-            <div className="table-title">Recent Reservations</div>
+            <div>
+              <div className="table-title">Recent Reservations</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                Latest bookings synced into the PMS core
+              </div>
+            </div>
           </div>
           <table>
             <thead>
@@ -125,27 +214,47 @@ export default function Dashboard() {
                 <th>Check-In</th>
                 <th>Check-Out</th>
                 <th>Status</th>
-                <th>Amount</th>
+                <th>Total Value</th>
               </tr>
             </thead>
             <tbody>
-              {recentReservations.length === 0 && (
-                <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>No reservations yet</td></tr>
-              )}
-              {recentReservations.map((r) => (
-                <tr key={r.id}>
-                  <td>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--primary)' }}>
-                      {r.confirmation_number}
-                    </span>
+              {recentReservations.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '36px 16px' }}>
+                    No reservations found for this property
                   </td>
-                  <td style={{ color: 'var(--text-secondary)' }}>#{r.guest_id}</td>
-                  <td><DateDisplay date={r.check_in_date} /></td>
-                  <td><DateDisplay date={r.check_out_date} /></td>
-                  <td><Badge status={r.status} /></td>
-                  <td><Currency amount={r.total_amount} /></td>
                 </tr>
-              ))}
+              ) : (
+                recentReservations.map((r) => (
+                  <tr key={r.id}>
+                    <td>
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: 12,
+                          color: 'var(--primary)',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {r.confirmation_number}
+                      </span>
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)' }}>Guest #{r.guest_id}</td>
+                    <td>
+                      <DateDisplay date={r.check_in_date} />
+                    </td>
+                    <td>
+                      <DateDisplay date={r.check_out_date} />
+                    </td>
+                    <td>
+                      <Badge status={r.status} />
+                    </td>
+                    <td>
+                      <Currency amount={r.total_amount} />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
