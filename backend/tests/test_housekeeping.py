@@ -96,9 +96,9 @@ async def test_housekeeping_full_workflow(client: AsyncClient, db):
     assert inspect.status_code == 200
     assert inspect.json()["status"] == "APPROVED"
 
-    # Room should be READY
+    # Room should be AVAILABLE
     room = await client.get(f"/api/v1/hotels/{hid}/rooms/{room_id}", headers=h)
-    assert room.json()["status"] == "READY"
+    assert room.json()["status"] == "AVAILABLE"
 
 
 @pytest.mark.asyncio
@@ -148,7 +148,7 @@ async def test_housekeeping_rejection_workflow(client: AsyncClient, db):
     assert final.json()["status"] == "APPROVED"
 
     room = await client.get(f"/api/v1/hotels/{hid}/rooms/{room_id}", headers=h)
-    assert room.json()["status"] == "READY"
+    assert room.json()["status"] == "AVAILABLE"
 
 
 @pytest.mark.asyncio
