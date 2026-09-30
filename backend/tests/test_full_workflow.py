@@ -170,9 +170,9 @@ async def test_complete_hotel_workflow(client: AsyncClient, db):
     assert inspect_resp.status_code == 200
     assert inspect_resp.json()["status"] == "APPROVED"
 
-    # Room should be READY
+    # Room should be AVAILABLE
     room_status = await client.get(f"/api/v1/hotels/{hid}/rooms/{room_id}", headers=h)
-    assert room_status.json()["status"] == "READY"
+    assert room_status.json()["status"] == "AVAILABLE"
 
     # ── 10. Room is available again ───────────────────────────────────────────
     avail_resp2 = await client.get(

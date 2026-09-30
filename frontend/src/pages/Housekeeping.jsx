@@ -172,7 +172,7 @@ export default function Housekeeping() {
       })
       toast.success(
         inspectApprove
-          ? `Room ${getRoomNum(showInspect.room_id)} Approved — now READY`
+          ? `Room ${getRoomNum(showInspect.room_id)} Approved — now AVAILABLE`
           : `Room ${getRoomNum(showInspect.room_id)} Rejected — returned to cleaning`
       )
       setShowInspect(null)
@@ -761,7 +761,7 @@ export default function Housekeeping() {
               className={`btn ${inspectApprove ? 'btn-success' : 'btn-danger'}`}
               onClick={handleInspect}
             >
-              {inspectApprove ? 'Approve — Mark Room READY' : 'Reject — Return to Cleaning'}
+              {inspectApprove ? 'Approve — Mark Room AVAILABLE' : 'Reject — Return to Cleaning'}
             </button>
           </>
         }

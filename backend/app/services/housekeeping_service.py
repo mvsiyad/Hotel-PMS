@@ -123,7 +123,7 @@ async def inspect_task(
     if request.approved:
         task.status = "APPROVED"
         if room:
-            transition_room(room, "READY")
+            transition_room(room, "AVAILABLE")
         action = "HOUSEKEEPING_APPROVED"
     else:
         task.status = "REJECTED"
